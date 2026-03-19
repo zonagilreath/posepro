@@ -1,29 +1,19 @@
 # PosePro
 
-Minimal starter scaffold for the PosePro project.
+AI-powered proposal writer for freelancers.
 
-This repo is intentionally small, but it now includes a thin backend slice for the next real Linear work: SQLAlchemy model stubs, auth route stubs, and a structured proposal preview plus SSE stream endpoint.
+PosePro is a full-stack application for turning client briefs into structured proposal drafts with support for streaming generation, editing, templates, and export workflows. The current project direction in Linear centers on a FastAPI backend, a React frontend, and Claude-powered proposal generation ([PosePro project](https://linear.app/zonadostuff/project/posepro-61e2edef5fc9)).
 
-## What is included
+## Overview
 
-- `backend/` — FastAPI app with config loading, CORS setup, auth routes, proposal routes, and a health route
-- `backend/app/config/` — environment-driven settings
-- `backend/app/db/` — shared SQLAlchemy engine and session setup
-- `backend/app/models/` — thin SQLAlchemy models for `User`, `Brief`, `Proposal`, and `Template`
-- `backend/app/routers/` — route modules for health, auth, and proposal generation
-- `backend/app/schemas/` — Pydantic request and response models
-- `backend/app/services/` — stubbed auth and proposal-generation service layer
-- `frontend/` — Vite + React + TypeScript app
-- `frontend/src/App.tsx` — simple app shell with a backend health check
-- `.env.example` files for backend and frontend
+The repository is organized around the main product areas already defined in the project work:
 
-## Why this structure
+- FastAPI backend for auth, briefs, proposals, generation, and export flows ([ZON-5](https://linear.app/zonadostuff/issue/ZON-5/fastapi-project-setup)), ([ZON-7](https://linear.app/zonadostuff/issue/ZON-7/crud-endpoints-for-briefs-and-proposals)), ([ZON-8](https://linear.app/zonadostuff/issue/ZON-8/auth-integration))
+- SQLAlchemy models for users, briefs, proposals, and templates ([ZON-6](https://linear.app/zonadostuff/issue/ZON-6/database-models-with-sqlalchemy))
+- structured proposal generation and streaming delivery to the frontend ([ZON-9](https://linear.app/zonadostuff/issue/ZON-9/ai-proposal-generation-structured-prompting)), ([ZON-10](https://linear.app/zonadostuff/issue/ZON-10/streaming-sse-endpoint-for-generation))
+- React frontend for the brief intake flow, dashboard, editor, and generation view ([ZON-14](https://linear.app/zonadostuff/issue/ZON-14/react-project-setup)), ([ZON-17](https://linear.app/zonadostuff/issue/ZON-17/brief-input-form)), ([ZON-18](https://linear.app/zonadostuff/issue/ZON-18/streaming-generation-view))
 
-The repo shape now lines up with the live PosePro Linear work for FastAPI setup, SQLAlchemy models, auth integration, structured proposal generation, and the SSE hero flow ([ZON-5](https://linear.app/zonadostuff/issue/ZON-5/fastapi-project-setup)), ([ZON-6](https://linear.app/zonadostuff/issue/ZON-6/database-models-with-sqlalchemy)), ([ZON-8](https://linear.app/zonadostuff/issue/ZON-8/auth-integration)), ([ZON-9](https://linear.app/zonadostuff/issue/ZON-9/ai-proposal-generation-structured-prompting)), ([ZON-10](https://linear.app/zonadostuff/issue/ZON-10/streaming-sse-endpoint-for-generation)).
-
-The backend still stops short of real persistence, real auth, and real Claude integration. That keeps the project easy to reshape while still giving you the correct route surface area and data contracts to build against.
-
-## Current layout
+## Structure
 
 ```text
 posepro/
@@ -71,35 +61,30 @@ posepro/
 └── README.md
 ```
 
-## Dependencies
+## Tech stack
 
 ### Backend
 
-Required:
-
 - Python 3.11+
+- FastAPI
+- SQLAlchemy
 - Poetry
-
-Current defaults:
-
-- SQLite for local setup
-- stubbed proposal generation service
-
-Optional later, not yet wired:
-
-- PostgreSQL / Supabase
-- Anthropic API key
+- Pydantic
 
 ### Frontend
 
-Required:
+- React
+- TypeScript
+- Vite
 
-- Node.js 20+
-- npm
+### Planned platform integrations
 
-## First-time setup
+- Claude API for proposal generation ([ZON-9](https://linear.app/zonadostuff/issue/ZON-9/ai-proposal-generation-structured-prompting))
+- Supabase / PostgreSQL for persistence and auth ([ZON-6](https://linear.app/zonadostuff/issue/ZON-6/database-models-with-sqlalchemy)), ([ZON-8](https://linear.app/zonadostuff/issue/ZON-8/auth-integration))
 
-### 1. Clone the repo
+## Setup
+
+### Clone the repository
 
 Unix/macOS:
 
@@ -115,11 +100,11 @@ git clone https://github.com/zonagilreath/posepro.git
 cd posepro
 ```
 
-### 2. Install backend dependencies
+### Backend
 
-#### Unix/macOS
+Poetry’s documentation recommends `pipx install poetry` as the installation path for Poetry ([Poetry docs](https://python-poetry.org/docs/)).
 
-If Poetry is not installed yet, the official docs recommend `pipx install poetry` ([Poetry docs](https://python-poetry.org/docs/)).
+Unix/macOS:
 
 ```bash
 cd backend
@@ -127,9 +112,7 @@ cp .env.example .env
 poetry install
 ```
 
-#### Windows PowerShell
-
-If Poetry is not installed yet, install it with `pipx install poetry` per the official docs ([Poetry docs](https://python-poetry.org/docs/)).
+Windows PowerShell:
 
 ```powershell
 cd backend
@@ -137,9 +120,9 @@ Copy-Item .env.example .env
 poetry install
 ```
 
-### 3. Install frontend dependencies
+### Frontend
 
-#### Unix/macOS
+Unix/macOS:
 
 ```bash
 cd ../frontend
@@ -147,7 +130,7 @@ cp .env.example .env
 npm install
 ```
 
-#### Windows PowerShell
+Windows PowerShell:
 
 ```powershell
 cd ..\frontend
@@ -155,22 +138,22 @@ Copy-Item .env.example .env
 npm install
 ```
 
-## Running the project
+## Running locally
 
-You run backend and frontend in separate terminals.
+Run backend and frontend in separate terminals.
 
-### Backend dev server
+### Backend
 
-The project brief explicitly expects `uvicorn app.main:app --reload` as the dev server command. FastAPI’s docs also support streamed responses through `StreamingResponse`, and FastAPI documents SSE-style streaming patterns for real-time updates ([FastAPI custom responses](https://fastapi.tiangolo.com/advanced/custom-response/)), ([FastAPI SSE docs](https://fastapi.tiangolo.com/tutorial/server-sent-events/)).
+The backend currently uses `uvicorn app.main:app --reload`, which matches the FastAPI setup direction already defined for the project ([ZON-5](https://linear.app/zonadostuff/issue/ZON-5/fastapi-project-setup)). FastAPI documents `StreamingResponse` and SSE-style streaming patterns for real-time responses, which is relevant for the proposal generation flow ([FastAPI custom responses](https://fastapi.tiangolo.com/advanced/custom-response/)), ([FastAPI SSE docs](https://fastapi.tiangolo.com/tutorial/server-sent-events/)).
 
-#### Unix/macOS
+Unix/macOS:
 
 ```bash
 cd backend
 poetry run uvicorn app.main:app --reload
 ```
 
-#### Windows PowerShell
+Windows PowerShell:
 
 ```powershell
 cd backend
@@ -186,18 +169,18 @@ Backend URLs:
 - Proposal preview: `POST http://localhost:8000/api/proposals/generate/preview`
 - Proposal stream: `POST http://localhost:8000/api/proposals/generate`
 
-### Frontend dev server
+### Frontend
 
-Vite’s current getting-started guide uses the `react-ts` template for React + TypeScript projects ([Vite guide](https://vite.dev/guide/)). This scaffold follows that basic setup.
+Vite’s guide uses the `react-ts` template for React + TypeScript projects ([Vite guide](https://vite.dev/guide/)).
 
-#### Unix/macOS
+Unix/macOS:
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-#### Windows PowerShell
+Windows PowerShell:
 
 ```powershell
 cd frontend
@@ -208,13 +191,9 @@ Frontend URL:
 
 - App: `http://localhost:5173`
 
-If both servers are running, the frontend should show `API health: ok`.
-
-## Environment files
+## Environment variables
 
 ### `backend/.env`
-
-Current fields:
 
 - `APP_NAME`
 - `APP_ENV`
@@ -224,15 +203,13 @@ Current fields:
 - `SQLALCHEMY_ECHO`
 - `ANTHROPIC_API_KEY`
 
-Local default uses SQLite so you can boot the backend without provisioning Postgres first.
+The local default uses SQLite so the backend can run without provisioning Postgres first.
 
 ### `frontend/.env`
 
-Current fields:
-
 - `VITE_API_BASE_URL`
 
-## Current backend contracts
+## API surface
 
 ### Auth
 
@@ -240,14 +217,14 @@ Current fields:
 - `POST /api/auth/login`
 - `GET /api/auth/session`
 
-These are stubbed and return fake dev tokens for now. They exist to lock in the contract from the Linear auth issue before wiring real Supabase Auth or JWT handling ([ZON-8](https://linear.app/zonadostuff/issue/ZON-8/auth-integration)).
+These routes match the auth work tracked in Linear ([ZON-8](https://linear.app/zonadostuff/issue/ZON-8/auth-integration)).
 
 ### Proposal generation
 
 - `POST /api/proposals/generate/preview`
 - `POST /api/proposals/generate`
 
-`/generate/preview` returns structured JSON sections. `/generate` returns a `text/event-stream` response that emits section events followed by a final complete event, matching the intended streaming UX from the Linear hero feature issues ([ZON-9](https://linear.app/zonadostuff/issue/ZON-9/ai-proposal-generation-structured-prompting)), ([ZON-10](https://linear.app/zonadostuff/issue/ZON-10/streaming-sse-endpoint-for-generation)).
+The proposal generation endpoints map to the structured prompting and streaming work tracked in Linear ([ZON-9](https://linear.app/zonadostuff/issue/ZON-9/ai-proposal-generation-structured-prompting)), ([ZON-10](https://linear.app/zonadostuff/issue/ZON-10/streaming-sse-endpoint-for-generation)).
 
 Example preview request:
 
@@ -264,20 +241,10 @@ Example preview request:
 }
 ```
 
-## What is still intentionally thin
+## Roadmap areas
 
-- no Alembic setup yet
-- no real DB persistence or CRUD handlers yet
-- no auth middleware yet
-- no real Claude API integration yet
-- no frontend wiring for auth, brief submission, or stream consumption yet
+Current work in Linear covers:
 
-## Best next steps
-
-The most natural next slice is:
-
-- add Alembic and first migration shell for the four models
-- add protected-route dependency and swap auth stubs toward real JWT or Supabase auth
-- add brief and proposal CRUD route stubs to match the remaining backend issues
-- wire the frontend brief form to the preview and stream endpoints
-- replace the stub generation service with a real Claude-backed implementation
+- backend CRUD and validation ([ZON-7](https://linear.app/zonadostuff/issue/ZON-7/crud-endpoints-for-briefs-and-proposals)), ([ZON-13](https://linear.app/zonadostuff/issue/ZON-13/error-handling-and-input-validation))
+- frontend auth, dashboard, and brief intake ([ZON-15](https://linear.app/zonadostuff/issue/ZON-15/auth-flow-ui)), ([ZON-16](https://linear.app/zonadostuff/issue/ZON-16/dashboard-page)), ([ZON-17](https://linear.app/zonadostuff/issue/ZON-17/brief-input-form))
+- editor, templates, export, and presentation polish ([ZON-19](https://linear.app/zonadostuff/issue/ZON-19/rich-text-editor-integration)), ([ZON-21](https://linear.app/zonadostuff/issue/ZON-21/template-library-page)), ([ZON-22](https://linear.app/zonadostuff/issue/ZON-22/export-pdf-copy-shareable-link)), ([ZON-23](https://linear.app/zonadostuff/issue/ZON-23/landing-page))
