@@ -2,24 +2,26 @@
 
 Minimal starter scaffold for the PosePro project.
 
-This repo is intentionally small. It gives you a clean split between backend and frontend, confirms the two sides can talk to each other, and leaves the actual product work open instead of locking you into premature architecture.
+This repo is intentionally small, but it now includes a thin backend slice for the next real Linear work: SQLAlchemy model stubs, auth route stubs, and a structured proposal preview plus SSE stream endpoint.
 
 ## What is included
 
-- `backend/` — FastAPI app with config loading, CORS setup, and a health route
+- `backend/` — FastAPI app with config loading, CORS setup, auth routes, proposal routes, and a health route
 - `backend/app/config/` — environment-driven settings
-- `backend/app/routers/` — API route modules
-- `backend/app/models/` — placeholder for SQLAlchemy models
-- `backend/app/services/` — placeholder for AI, auth, and business logic
+- `backend/app/db/` — shared SQLAlchemy engine and session setup
+- `backend/app/models/` — thin SQLAlchemy models for `User`, `Brief`, `Proposal`, and `Template`
+- `backend/app/routers/` — route modules for health, auth, and proposal generation
+- `backend/app/schemas/` — Pydantic request and response models
+- `backend/app/services/` — stubbed auth and proposal-generation service layer
 - `frontend/` — Vite + React + TypeScript app
 - `frontend/src/App.tsx` — simple app shell with a backend health check
 - `.env.example` files for backend and frontend
 
 ## Why this structure
 
-The attached project brief points toward a FastAPI backend with `app/routers`, `app/models`, `app/services`, and `app/config`, plus a React frontend using Vite and TypeScript. The repo follows that shape, but stops short of implementing the real features so you can make those decisions incrementally.
+The repo shape now lines up with the live PosePro Linear work for FastAPI setup, SQLAlchemy models, auth integration, structured proposal generation, and the SSE hero flow ([ZON-5](https://linear.app/zonadostuff/issue/ZON-5/fastapi-project-setup)), ([ZON-6](https://linear.app/zonadostuff/issue/ZON-6/database-models-with-sqlalchemy)), ([ZON-8](https://linear.app/zonadostuff/issue/ZON-8/auth-integration)), ([ZON-9](https://linear.app/zonadostuff/issue/ZON-9/ai-proposal-generation-structured-prompting)), ([ZON-10](https://linear.app/zonadostuff/issue/ZON-10/streaming-sse-endpoint-for-generation)).
 
-The backend is ready for adding auth, SQLAlchemy models, proposal generation services, and SSE routes from the brief. The frontend is ready for auth screens, dashboard work, the brief intake form, and the streaming proposal UI described in the brief.
+The backend still stops short of real persistence, real auth, and real Claude integration. That keeps the project easy to reshape while still giving you the correct route surface area and data contracts to build against.
 
 ## Current layout
 
@@ -29,18 +31,34 @@ posepro/
 │   ├── app/
 │   │   ├── config/
 │   │   │   └── settings.py
+│   │   ├── db/
+│   │   │   └── session.py
 │   │   ├── models/
+│   │   │   ├── base.py
+│   │   │   ├── brief.py
+│   │   │   ├── proposal.py
+│   │   │   ├── template.py
+│   │   │   └── user.py
 │   │   ├── routers/
-│   │   │   └── health.py
+│   │   │   ├── auth.py
+│   │   │   ├── health.py
+│   │   │   └── proposals.py
+│   │   ├── schemas/
+│   │   │   ├── auth.py
+│   │   │   └── proposals.py
 │   │   ├── services/
+│   │   │   ├── auth.py
+│   │   │   └── proposal_generation.py
 │   │   └── main.py
 │   ├── .env.example
+│   ├── poetry.lock
 │   └── pyproject.toml
 ├── frontend/
 │   ├── src/
 │   │   ├── App.tsx
 │   │   ├── main.tsx
-│   │   └── styles.css
+│   │   ├── styles.css
+│   │   └── vite-env.d.ts
 │   ├── .env.example
 │   ├── index.html
 │   ├── package.json
@@ -61,6 +79,11 @@ Required:
 
 - Python 3.11+
 - Poetry
+
+Current defaults:
+
+- SQLite for local setup
+- stubbed proposal generation service
 
 Optional later, not yet wired:
 
@@ -138,7 +161,7 @@ You run backend and frontend in separate terminals.
 
 ### Backend dev server
 
-The project brief explicitly expects `uvicorn app.main:app --reload` as the dev server command. FastAPI’s current docs also document `fastapi dev` as a recommended development entry point ([FastAPI docs](https://fastapi.tiangolo.com/)). This scaffold keeps the brief-aligned `uvicorn` command.
+The project brief explicitly expects `uvicorn app.main:app --reload` as the dev server command. FastAPI’s docs also support streamed responses through `StreamingResponse`, and FastAPI documents SSE-style streaming patterns for real-time updates ([FastAPI custom responses](https://fastapi.tiangolo.com/advanced/custom-response/)), ([FastAPI SSE docs](https://fastapi.tiangolo.com/tutorial/server-sent-events/)).
 
 #### Unix/macOS
 
@@ -159,6 +182,9 @@ Backend URLs:
 - API root: `http://localhost:8000/`
 - Health check: `http://localhost:8000/api/health`
 - Swagger docs: `http://localhost:8000/docs`
+- Auth routes: `http://localhost:8000/api/auth/*`
+- Proposal preview: `POST http://localhost:8000/api/proposals/generate/preview`
+- Proposal stream: `POST http://localhost:8000/api/proposals/generate`
 
 ### Frontend dev server
 
@@ -195,7 +221,10 @@ Current fields:
 - `API_PREFIX`
 - `CORS_ORIGINS`
 - `DATABASE_URL`
+- `SQLALCHEMY_ECHO`
 - `ANTHROPIC_API_KEY`
+
+Local default uses SQLite so you can boot the backend without provisioning Postgres first.
 
 ### `frontend/.env`
 
@@ -203,16 +232,52 @@ Current fields:
 
 - `VITE_API_BASE_URL`
 
-## Suggested next steps
+## Current backend contracts
 
-Based on the project brief, the next sensible slices are:
+### Auth
 
-- add SQLAlchemy base setup and initial models for `User`, `Brief`, `Proposal`, and `Template`
-- add auth route stubs and middleware
-- add proposal generation service interfaces without fully implementing the prompt chain yet
-- add a brief submission form in the frontend
-- add an SSE endpoint contract before building the streaming UI
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/session`
 
-## Notes on sources
+These are stubbed and return fake dev tokens for now. They exist to lock in the contract from the Linear auth issue before wiring real Supabase Auth or JWT handling ([ZON-8](https://linear.app/zonadostuff/issue/ZON-8/auth-integration)).
 
-I attempted to inspect the live Linear PosePro project directly, but the current Linear connector required reauthentication and the local browser session was not signed in during review. The repo scaffold therefore follows the attached project brief and the target stack it defines.
+### Proposal generation
+
+- `POST /api/proposals/generate/preview`
+- `POST /api/proposals/generate`
+
+`/generate/preview` returns structured JSON sections. `/generate` returns a `text/event-stream` response that emits section events followed by a final complete event, matching the intended streaming UX from the Linear hero feature issues ([ZON-9](https://linear.app/zonadostuff/issue/ZON-9/ai-proposal-generation-structured-prompting)), ([ZON-10](https://linear.app/zonadostuff/issue/ZON-10/streaming-sse-endpoint-for-generation)).
+
+Example preview request:
+
+```json
+{
+  "brief_content": "Build a proposal tool for freelancers that can turn a pasted project brief into a polished draft.",
+  "structured_fields": {
+    "budget": "$3k-$5k",
+    "timeline": "2-3 weeks",
+    "industry": "SaaS"
+  },
+  "tone": "professional",
+  "length": "concise"
+}
+```
+
+## What is still intentionally thin
+
+- no Alembic setup yet
+- no real DB persistence or CRUD handlers yet
+- no auth middleware yet
+- no real Claude API integration yet
+- no frontend wiring for auth, brief submission, or stream consumption yet
+
+## Best next steps
+
+The most natural next slice is:
+
+- add Alembic and first migration shell for the four models
+- add protected-route dependency and swap auth stubs toward real JWT or Supabase auth
+- add brief and proposal CRUD route stubs to match the remaining backend issues
+- wire the frontend brief form to the preview and stream endpoints
+- replace the stub generation service with a real Claude-backed implementation
